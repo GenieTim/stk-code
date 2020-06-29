@@ -33,6 +33,7 @@ option(USE_IPV6 "Allow create or connect to game server with IPv6 address, syste
 option(USE_SYSTEM_GLEW "Use system GLEW instead of the built-in version, when available." ON)
 option(USE_SYSTEM_WIIUSE "Use system WiiUse instead of the built-in version, when available." OFF)
 option(USE_SQLITE3 "Use sqlite to manage server stats and ban list." ON)
+option(EMSCRIPTEN "Build for the Web/use Emscripten's Libraries" OFF)
 
 option(USE_CRYPTO_OPENSSL "Use OpenSSL instead of Nettle for cryptography in STK." ON)
 CMAKE_DEPENDENT_OPTION(BUILD_RECORDER "Build opengl recorder" ON
@@ -300,7 +301,7 @@ if (NOT SERVER_ONLY)
     find_path(SDL2_INCLUDEDIR NAMES SDL.h PATH_SUFFIXES SDL2 include/SDL2 include PATHS)
     if (NOT SDL2_LIBRARY OR NOT SDL2_INCLUDEDIR)
         message(FATAL_ERROR "SDL2 not found. "
-            "SDL2 is required to handle gamepad in SuperTuxKart.")
+            "SDL2 is required to handle gamepad in SuperTuxKart. ${SDL2_INCLUDEDIR} ${SDL2_LIBRARY}")
     else()
         include_directories("${SDL2_INCLUDEDIR}")
         MESSAGE(STATUS "Use system SDL2: ${SDL2_LIBRARY}")
@@ -388,7 +389,7 @@ if (NOT SERVER_ONLY)
     find_path(HARFBUZZ_INCLUDEDIR NAMES harfbuzz/hb.h hb.h PATHS)
     if (NOT HARFBUZZ_LIBRARY OR NOT HARFBUZZ_INCLUDEDIR)
         message(FATAL_ERROR "Harfbuzz not found. "
-            "Harfbuzz is required to display characters in SuperTuxKart.")
+            "Harfbuzz is required to display characters in SuperTuxKart. ${HARFBUZZ_INCLUDEDIR} ${HARFBUZZ_LIBRARY}")
     else()
         include_directories("${HARFBUZZ_INCLUDEDIR}")
         MESSAGE(STATUS "Use system harfbuzz: ${HARFBUZZ_LIBRARY}")
@@ -513,6 +514,7 @@ if(APPLE AND NOT IOS)
 
     # build the executable and create an app bundle
     add_executable(supertuxkart MACOSX_BUNDLE ${STK_SOURCES})
+    # add_executable(supertuxkart ${STK_SOURCES} ${STK_RESOURCES} ${STK_HEADERS})
 
     find_library(IOKIT_LIBRARY IOKit)
     find_library(COCOA_LIBRARY Cocoa)
@@ -596,8 +598,10 @@ elseif(MINGW)
     target_link_libraries(supertuxkart ${PROJECT_SOURCE_DIR}/${DEPENDENCIES}/lib/libcurl.dll)
     target_link_libraries(supertuxkart ${PROJECT_SOURCE_DIR}/${DEPENDENCIES}/lib/libeay32.dll)
 else()
-    find_package(CURL REQUIRED)
-    include_directories(${CURL_INCLUDE_DIRS})
+    if (NOT EMSCRIPTEN)
+        find_package(CURL REQUIRED)
+        include_directories(${CURL_INCLUDE_DIRS})
+    endif()
 
     find_path(NETTLE_INCLUDE_DIRS nettle/version.h)
     find_library(NETTLE_LIBRARY NAMES nettle libnettle)
@@ -633,10 +637,13 @@ target_link_libraries(supertuxkart
     ${ENET_LIBRARIES}
     stkirrlicht
     ${Angelscript_LIBRARIES}
-    ${CURL_LIBRARIES}
     ${LIBRESOLV_LIBRARY}
     mcpp
-    )
+)
+
+if (NOT EMSCRIPTEN)
+    target_link_libraries(supertuxkart ${CURL_LIBRARIES})
+endif()
 
 if (USE_SQLITE3)
     target_link_libraries(supertuxkart ${SQLITE3_LIBRARY})

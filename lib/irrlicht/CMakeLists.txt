@@ -2,12 +2,16 @@
 if(NOT SERVER_ONLY)
     find_package(PNG REQUIRED)
     find_package(JPEG REQUIRED)
-    find_package(ZLIB REQUIRED)
+
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/"
                         "${JPEG_INCLUDE_DIR}"
                         "${PNG_INCLUDE_DIRS}"
-                        "${ZLIB_INCLUDE_DIR}"
                         "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
+                        
+    if (NOT EMSCRIPEN)
+        find_package(ZLIB REQUIRED)
+        include_directories("${ZLIB_INCLUDE_DIR}")
+    endif()
 
     if(NOT USE_GLES2)
         find_package(OpenGL REQUIRED)
@@ -29,8 +33,10 @@ if(NOT SERVER_ONLY)
 else()
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/"
                         "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
-    find_package(ZLIB REQUIRED)
-    include_directories("${ZLIB_INCLUDE_DIR}")
+    if (NOT EMSCRIPEN)
+        find_package(ZLIB REQUIRED)
+        include_directories("${ZLIB_INCLUDE_DIR}")
+    endif()
     add_definitions(-DNO_IRR_COMPILE_WITH_LIBPNG_)
     add_definitions(-DNO_IRR_COMPILE_WITH_LIBJPEG_)
     add_definitions(-DNO_IRR_COMPILE_WITH_BMP_LOADER_)
@@ -547,7 +553,11 @@ endif()
 
 add_library(stkirrlicht STATIC ${IRRLICHT_SOURCES})
 
-target_link_libraries(stkirrlicht ${ZLIB_LIBRARY})
+if (EMSCRIPEN)
+    add_link_options("LINKER:-s USE_ZLIB")
+else()
+    target_link_libraries(stkirrlicht ${ZLIB_LIBRARY})
+endif()
 
 if(NOT SERVER_ONLY)
     target_link_libraries(stkirrlicht ${PNG_LIBRARY} ${JPEG_LIBRARY})

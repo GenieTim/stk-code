@@ -33,7 +33,7 @@ option(USE_IPV6 "Allow create or connect to game server with IPv6 address, syste
 option(USE_SYSTEM_GLEW "Use system GLEW instead of the built-in version, when available." ON)
 option(USE_SYSTEM_WIIUSE "Use system WiiUse instead of the built-in version, when available." OFF)
 option(USE_SQLITE3 "Use sqlite to manage server stats and ban list." ON)
-option(EMSCRIPTEN "Build for the Web/use Emscripten's Libraries" OFF)
+set(EMSCRIPTEN ON CACHE BOOL "Build for the Web/use Emscripten's Libraries")
 
 option(USE_CRYPTO_OPENSSL "Use OpenSSL instead of Nettle for cryptography in STK." ON)
 CMAKE_DEPENDENT_OPTION(BUILD_RECORDER "Build opengl recorder" ON
@@ -235,8 +235,12 @@ endif()
 
 if (NOT SERVER_ONLY)
     # Add jpeg library
-    find_package(JPEG REQUIRED)
-    include_directories(${JPEG_INCLUDE_DIR})
+    if (EMSCRIPTEN)
+        add_link_options("LINKER:-s USE_LIBJPEG=1")
+    else()
+        find_package(JPEG REQUIRED)
+        include_directories(${JPEG_INCLUDE_DIR})
+    endif()
 endif()
 
 if (BUILD_RECORDER)
@@ -295,14 +299,18 @@ endif()
 
 if (NOT SERVER_ONLY)
     # SDL2
-    find_library(SDL2_LIBRARY NAMES SDL2 libSDL2)
-    find_path(SDL2_INCLUDEDIR NAMES SDL.h PATH_SUFFIXES SDL2 include/SDL2 include PATHS)
-    if (NOT SDL2_LIBRARY OR NOT SDL2_INCLUDEDIR)
-        message(FATAL_ERROR "SDL2 not found. "
-            "SDL2 is required to handle gamepad in SuperTuxKart. ${SDL2_INCLUDEDIR} ${SDL2_LIBRARY}")
+    if (EMSCRIPTEN)
+        add_link_options("LINKER:-s USE_SDL2=1")
     else()
-        include_directories("${SDL2_INCLUDEDIR}")
-        MESSAGE(STATUS "Use system SDL2: ${SDL2_LIBRARY}")
+        find_library(SDL2_LIBRARY NAMES SDL2 libSDL2)
+        find_path(SDL2_INCLUDEDIR NAMES SDL.h PATH_SUFFIXES SDL2 include/SDL2 include PATHS)
+        if (NOT SDL2_LIBRARY OR NOT SDL2_INCLUDEDIR)
+            message(FATAL_ERROR "SDL2 not found. "
+                "SDL2 is required to handle gamepad in SuperTuxKart. ${SDL2_INCLUDEDIR} ${SDL2_LIBRARY}")
+        else()
+            include_directories("${SDL2_INCLUDEDIR}")
+            MESSAGE(STATUS "Use system SDL2: ${SDL2_LIBRARY}")
+        endif()
     endif()
 endif()
 
@@ -365,8 +373,13 @@ if(NOT SERVER_ONLY)
     include_directories(${OPENAL_INCLUDE_DIR})
 
     # OggVorbis
-    find_package(OggVorbis REQUIRED)
-    include_directories(${OGGVORBIS_INCLUDE_DIRS})
+    if (EMSCRIPTEN)
+        add_link_options("LINKER:-s USE_VORBIS=1")
+        add_link_options("LINKER:-s USE_OGG=1")
+    else()
+        find_package(OggVorbis REQUIRED)
+        include_directories(${OGGVORBIS_INCLUDE_DIRS})
+    endif()
 
     add_definitions(-DENABLE_SOUND)
 endif()
@@ -374,23 +387,31 @@ endif()
 # Text handling in STK (We use freetype, harfbuzz, fribidi and libraqm for i18n text handling)
 if (NOT SERVER_ONLY)
     # Freetype
-    find_package(Freetype)
-    if(FREETYPE_FOUND)
-        include_directories(${FREETYPE_INCLUDE_DIRS})
+    if (NOT EMSCRIPTEN)
+        find_package(Freetype)
+        if(FREETYPE_FOUND)
+            include_directories(${FREETYPE_INCLUDE_DIRS})
+        else()
+            message(FATAL_ERROR "Freetype not found. "
+                "Freetype is required to display characters in SuperTuxKart.")
+        endif()
     else()
-        message(FATAL_ERROR "Freetype not found. "
-            "Freetype is required to display characters in SuperTuxKart.")
+        add_link_options("LINKER:-s USE_FREETYPE=1")
     endif()
 
     # Harfbuzz
-    find_library(HARFBUZZ_LIBRARY NAMES harfbuzz libharfbuzz)
-    find_path(HARFBUZZ_INCLUDEDIR NAMES harfbuzz/hb.h hb.h PATHS)
-    if (NOT HARFBUZZ_LIBRARY OR NOT HARFBUZZ_INCLUDEDIR)
-        message(FATAL_ERROR "Harfbuzz not found. "
-            "Harfbuzz is required to display characters in SuperTuxKart. ${HARFBUZZ_INCLUDEDIR} ${HARFBUZZ_LIBRARY}")
+    if (NOT EMSCRIPTEN)
+        find_library(HARFBUZZ_LIBRARY NAMES harfbuzz libharfbuzz)
+        find_path(HARFBUZZ_INCLUDEDIR NAMES harfbuzz/hb.h hb.h PATHS)
+        if (NOT HARFBUZZ_LIBRARY OR NOT HARFBUZZ_INCLUDEDIR)
+            message(FATAL_ERROR "Harfbuzz not found. "
+                "Harfbuzz is required to display characters in SuperTuxKart. ${HARFBUZZ_INCLUDEDIR} ${HARFBUZZ_LIBRARY}")
+        else()
+            include_directories("${HARFBUZZ_INCLUDEDIR}")
+            MESSAGE(STATUS "Use system harfbuzz: ${HARFBUZZ_LIBRARY}")
+        endif()
     else()
-        include_directories("${HARFBUZZ_INCLUDEDIR}")
-        MESSAGE(STATUS "Use system harfbuzz: ${HARFBUZZ_LIBRARY}")
+        add_link_options("LINKER:-s USE_HARFBUZZ=1")
     endif()
 
     # Fribidi
@@ -664,15 +685,18 @@ if(NOT SERVER_ONLY)
 
     target_link_libraries(supertuxkart
         ${SQUISH_LIBRARY}
-        ${JPEG_LIBRARIES}
-        ${OGGVORBIS_LIBRARIES}
         ${OPENAL_LIBRARY}
         ${RAQM_LIBRARY}
         ${FRIBIDI_LIBRARIES}
         ${FREETYPE_LIBRARIES}
         ${HARFBUZZ_LIBRARY}
-        ${SDL2_LIBRARY}
         graphics_utils)
+    if (NOT EMSCRIPTEN)
+        target_link_libraries(supertuxkart
+            ${OGGVORBIS_LIBRARIES}
+            ${JPEG_LIBRARIES}   
+            ${SDL2_LIBRARY})
+    endif()
 endif()
 
 if(UNIX AND NOT APPLE)

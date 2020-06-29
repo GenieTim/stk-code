@@ -1,16 +1,17 @@
 # CMakeLists.txt for Irrlicht in STK
 if(NOT SERVER_ONLY)
-    find_package(PNG REQUIRED)
-    find_package(JPEG REQUIRED)
 
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/"
-                        "${JPEG_INCLUDE_DIR}"
-                        "${PNG_INCLUDE_DIRS}"
                         "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
                         
-    if (NOT EMSCRIPEN)
+    if (EMSCRIPTEN)
+    else()
+        find_package(PNG REQUIRED)
+        find_package(JPEG REQUIRED)
         find_package(ZLIB REQUIRED)
-        include_directories("${ZLIB_INCLUDE_DIR}")
+        include_directories("${ZLIB_INCLUDE_DIR}"
+                            "${JPEG_INCLUDE_DIR}"
+                            "${PNG_INCLUDE_DIRS}")
     endif()
 
     if(NOT USE_GLES2)
@@ -554,13 +555,18 @@ endif()
 add_library(stkirrlicht STATIC ${IRRLICHT_SOURCES})
 
 if (EMSCRIPEN)
-    add_link_options("LINKER:-s USE_ZLIB")
+    add_link_options("LINKER:-s USE_ZLIB=1")
 else()
     target_link_libraries(stkirrlicht ${ZLIB_LIBRARY})
 endif()
 
 if(NOT SERVER_ONLY)
-    target_link_libraries(stkirrlicht ${PNG_LIBRARY} ${JPEG_LIBRARY})
+    if (EMSCRIPEN)
+        add_link_options("LINKER:-s USE_LIBJPEG=1")
+        add_link_options("LINKER:-s USE_LIBPNG=1")
+    else()
+        target_link_libraries(stkirrlicht ${PNG_LIBRARY} ${JPEG_LIBRARY})
+    endif()
     if(NOT APPLE AND USE_GLES2)
         target_link_libraries(stkirrlicht ${EGL_LIBRARY})
     endif()

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 2.8.8)
 
 # root CMakeLists for the SuperTuxKart project
 project(SuperTuxKart)
@@ -415,12 +415,26 @@ if (NOT SERVER_ONLY)
     endif()
 
     # Fribidi
-    find_package(Fribidi)
-    if(FRIBIDI_FOUND)
-        include_directories(${FRIBIDI_INCLUDE_DIRS})
+    if (EMSCRIPTEN)
+        # need to compile ourselfs... well.
+        include(ExternalProject)
+        set(FRIBIDI_EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
+
+        ExternalProject_Add(fribidi
+            GIT_REPOSITORY https://github.com/tamaskenez/fribidi-cmake
+            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${FRIBIDI_EXTERNAL_INSTALL_LOCATION}
+        )
+
+        include_directories(${FRIBIDI_EXTERNAL_INSTALL_LOCATION}/include)
+        link_directories(${FRIBIDI_EXTERNAL_INSTALL_LOCATION}/lib)
     else()
-        message(FATAL_ERROR "Fribidi not found. "
-            "Fribidi is required to display characters in SuperTuxKart.")
+        find_package(Fribidi)
+        if(FRIBIDI_FOUND)
+            include_directories(${FRIBIDI_INCLUDE_DIRS})
+        else()
+            message(FATAL_ERROR "Fribidi not found. "
+                "Fribidi is required to display characters in SuperTuxKart.")
+        endif()
     endif()
 
     # Libraqm
@@ -608,11 +622,11 @@ endif()
 # CURL and OpenSSL or Nettle
 # 1.0.1d for compatible AES GCM handling
 SET(OPENSSL_MINIMUM_VERSION "1.0.1d")
-if (MSVC OR LLVM_MINGW)
+if ((MSVC OR LLVM_MINGW) AND NOT EMSCRIPTEN)
     set(USE_CRYPTO_OPENSSL ON)
     target_link_libraries(supertuxkart ${PROJECT_SOURCE_DIR}/${DEPENDENCIES}/lib/libcurl.lib)
     target_link_libraries(supertuxkart ${PROJECT_SOURCE_DIR}/${DEPENDENCIES}/lib/libeay32.lib)
-elseif(MINGW)
+elseif(MINGW AND NOT EMSCRIPTEN)
     set(USE_CRYPTO_OPENSSL ON)
     target_link_libraries(supertuxkart ${PROJECT_SOURCE_DIR}/${DEPENDENCIES}/lib/libcurl.dll)
     target_link_libraries(supertuxkart ${PROJECT_SOURCE_DIR}/${DEPENDENCIES}/lib/libeay32.dll)
@@ -625,7 +639,7 @@ else()
     find_path(NETTLE_INCLUDE_DIRS nettle/version.h)
     find_library(NETTLE_LIBRARY NAMES nettle libnettle)
 
-    if (NOT NETTLE_INCLUDE_DIRS OR NOT NETTLE_LIBRARY OR USE_CRYPTO_OPENSSL)
+    if ((NOT NETTLE_INCLUDE_DIRS OR NOT NETTLE_LIBRARY OR USE_CRYPTO_OPENSSL) AND NOT EMSCRIPTEN)
         set(USE_CRYPTO_OPENSSL ON)
         find_package(OpenSSL REQUIRED)
 
@@ -636,7 +650,9 @@ else()
         include_directories(${OpenSSL_INCLUDE_DIRS})
     else()
         set(USE_CRYPTO_OPENSSL OFF)
-        include_directories(${NETTLE_INCLUDE_DIRS})
+        if (NOT EMSCRIPTEN)
+            include_directories(${NETTLE_INCLUDE_DIRS})
+        endif()
     endif()
 endif()
 

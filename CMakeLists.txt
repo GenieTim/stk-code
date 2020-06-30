@@ -417,16 +417,10 @@ if (NOT SERVER_ONLY)
     # Fribidi
     if (EMSCRIPTEN)
         # need to compile ourselfs... well.
-        include(ExternalProject)
-        set(FRIBIDI_EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
-
-        ExternalProject_Add(fribidi
-            GIT_REPOSITORY https://github.com/tamaskenez/fribidi-cmake
-            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${FRIBIDI_EXTERNAL_INSTALL_LOCATION}
-        )
-
-        include_directories(${FRIBIDI_EXTERNAL_INSTALL_LOCATION}/include)
-        link_directories(${FRIBIDI_EXTERNAL_INSTALL_LOCATION}/lib)
+        add_subdirectory("${PROJECT_SOURCE_DIR}/lib/fribidi-cmake")
+        include_directories("${PROJECT_SOURCE_DIR}/lib/fribidi-cmake/lib")
+        set(FRIBIDI_LIBRARIES fribidi)
+        # add_dependencies(supertuxkart fribidi)
     else()
         find_package(Fribidi)
         if(FRIBIDI_FOUND)
@@ -703,9 +697,9 @@ if(NOT SERVER_ONLY)
         ${SQUISH_LIBRARY}
         ${OPENAL_LIBRARY}
         ${RAQM_LIBRARY}
-        ${FRIBIDI_LIBRARIES}
         ${FREETYPE_LIBRARIES}
         ${HARFBUZZ_LIBRARY}
+        ${FRIBIDI_LIBRARIES}
         graphics_utils)
     if (NOT EMSCRIPTEN)
         target_link_libraries(supertuxkart

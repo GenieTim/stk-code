@@ -30,7 +30,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <fribidi/fribidi.h>
+#include <fribidi.h>
 #include <harfbuzz/hb.h>
 #include <harfbuzz/hb-ft.h>
 

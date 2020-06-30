@@ -30,7 +30,7 @@
 #include "utils/translation.hpp"
 
 #ifndef SERVER_ONLY
-#include <fribidi/fribidi.h>
+#include <fribidi.h>
 #include <harfbuzz/hb.h>
 #include <raqm.h>
 #endif

@@ -27,7 +27,11 @@
 #  include <winsock2.h>
 #endif
 #include <atomic>
+#if EMSCRIPTEN
+#include "emscripten_curl.h"
+#else
 #include <curl/curl.h>
+#endif
 #include <assert.h>
 #include <string>
 
@@ -98,6 +102,8 @@ namespace Online
         HTTPRequest(const char * const filename, int priority = 1);
         virtual           ~HTTPRequest()
         {
+            #ifdef EMSCRIPTEN
+            #else
             if (m_http_header)
                 curl_slist_free_all(m_http_header);
             if (m_curl_session)
@@ -105,6 +111,7 @@ namespace Online
                 curl_easy_cleanup(m_curl_session);
                 m_curl_session = NULL;
             }
+            #endif
         }
         virtual bool       isAllowedToAdd() const OVERRIDE;
         void               setApiURL(const std::string& url, const std::string &action);
@@ -123,7 +130,10 @@ namespace Online
         const char* getDownloadErrorMessage() const
         {
             assert(hadDownloadError());
+            #ifdef EMSCRIPTEN
+            #else
             return curl_easy_strerror(m_curl_code);
+            #endif
         }   // getDownloadErrorMessage
 
         // ------------------------------------------------------------------------
@@ -164,11 +174,14 @@ namespace Online
             assert(isPreparing());
             std::string s = StringUtils::toString(value);
 
+            #ifdef EMSCRIPTEN
+            #else
             char *s1 = curl_easy_escape(m_curl_session, name.c_str(), (int)name.size());
             char *s2 = curl_easy_escape(m_curl_session, s.c_str(), (int)s.size());
             m_parameters.append(std::string(s1) + "=" + s2 + "&");
             curl_free(s1);
             curl_free(s2);
+            #endif
         }   // addParameter
 
         // --------------------------------------------------------------------

@@ -35,7 +35,11 @@
 
 #include <atomic>
 #include <condition_variable>
+#if EMSCRIPTEN
+#include "emscripten_curl.h"
+#else
 #include <curl/curl.h>
+#endif
 #include <memory>
 #include <queue>
 #include <thread>

@@ -24,9 +24,13 @@
 #include "utils/synchronised.hpp"
 
 #ifdef WIN32
-#  include <winsock2.h>
+#include <winsock2.h>
 #endif
+#if EMSCRIPTEN
+#include "emscripten_curl.h"
+#else
 #include <curl/curl.h>
+#endif
 #include <assert.h>
 #include <memory>
 #include <string>

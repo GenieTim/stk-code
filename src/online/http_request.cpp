@@ -28,7 +28,11 @@
 #  include <winsock2.h>
 #endif
 
+#if EMSCRIPTEN
+#include "emscripten_curl.h"
+#else
 #include <curl/curl.h>
+#endif
 #include <assert.h>
 
 namespace Online
@@ -152,6 +156,9 @@ namespace Online
      */
     void HTTPRequest::prepareOperation()
     {
+        
+#ifdef EMSCRIPTEN
+#else
         m_curl_session = curl_easy_init();
         if (!m_curl_session)
         {
@@ -188,6 +195,7 @@ namespace Online
         curl_easy_setopt(m_curl_session, CURLOPT_HTTPHEADER, m_http_header);
         curl_easy_setopt(m_curl_session, CURLOPT_SSL_VERIFYPEER, 1L);
         curl_easy_setopt(m_curl_session, CURLOPT_SSL_VERIFYHOST, 2L);
+        #endif
     }   // prepareOperation
 
     // ------------------------------------------------------------------------
@@ -308,6 +316,8 @@ namespace Online
      */
     void HTTPRequest::afterOperation()
     {
+#ifdef EMSCRIPTEN
+#else
         if (m_curl_code == CURLE_OK)
             setProgress(1.0f);
         else
@@ -324,6 +334,7 @@ namespace Online
             curl_easy_cleanup(m_curl_session);
             m_curl_session = NULL;
         }
+        #endif
     }   // afterOperation
 
     // ------------------------------------------------------------------------

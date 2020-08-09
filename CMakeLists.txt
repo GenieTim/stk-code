@@ -33,7 +33,15 @@ option(USE_IPV6 "Allow create or connect to game server with IPv6 address, syste
 option(USE_SYSTEM_GLEW "Use system GLEW instead of the built-in version, when available." ON)
 option(USE_SYSTEM_WIIUSE "Use system WiiUse instead of the built-in version, when available." OFF)
 option(USE_SQLITE3 "Use sqlite to manage server stats and ban list." ON)
-set(EMSCRIPTEN ON CACHE BOOL "Build for the Web/use Emscripten's Libraries")
+set(EMSCRIPTEN OFF CACHE BOOL "Build for the Web/use Emscripten's Libraries")
+if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+    set(EMSCRIPTEN ON)
+    set(USE_FLAGS "-s USE_SDL=2 -s USE_FREETYPE=1 -s USE_HARFBUZZ=1 -s USE_LIBJPEG=1 -s USE_OGG=1 -s USE_VORBIS=1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${USE_FLAGS}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS}")
+    set(CMAKE_EXECUTABLE_SUFFIX .html)
+endif()
 
 option(USE_CRYPTO_OPENSSL "Use OpenSSL instead of Nettle for cryptography in STK." ON)
 CMAKE_DEPENDENT_OPTION(BUILD_RECORDER "Build opengl recorder" ON

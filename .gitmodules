@@ -1,3 +1,6 @@
 [submodule "lib/fribidi-cmake"]
 	path = lib/fribidi-cmake
 	url = git@github.com:BernhardWebstudio/fribidi.git
+[submodule "lib/nettle"]
+	path = lib/nettle/nettle
+	url = git@github.com:gnutls/nettle.git

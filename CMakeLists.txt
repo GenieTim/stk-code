@@ -33,6 +33,7 @@ option(USE_IPV6 "Allow create or connect to game server with IPv6 address, syste
 option(USE_SYSTEM_GLEW "Use system GLEW instead of the built-in version, when available." ON)
 option(USE_SYSTEM_WIIUSE "Use system WiiUse instead of the built-in version, when available." OFF)
 option(USE_SQLITE3 "Use sqlite to manage server stats and ban list." ON)
+option(USE_CRYPTO_OPENSSL "Use OpenSSL instead of Nettle for cryptography in STK." ON)
 set(EMSCRIPTEN OFF CACHE BOOL "Build for the Web/use Emscripten's Libraries")
 if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     set(EMSCRIPTEN ON)
@@ -40,10 +41,12 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${USE_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS}")
+    # Nettle is supposedly easier to compile ourselfs for emscripten
+    set(USE_CRYPTO_OPENSSL OFF)
+    include_directories("${PROJECT_SOURCE_DIR}/lib/nettle")
     set(CMAKE_EXECUTABLE_SUFFIX .html)
 endif()
 
-option(USE_CRYPTO_OPENSSL "Use OpenSSL instead of Nettle for cryptography in STK." ON)
 CMAKE_DEPENDENT_OPTION(BUILD_RECORDER "Build opengl recorder" ON
     "NOT SERVER_ONLY;NOT APPLE" OFF)
 CMAKE_DEPENDENT_OPTION(USE_SYSTEM_SQUISH "Use system Squish library instead of the built-in version, when available." ON

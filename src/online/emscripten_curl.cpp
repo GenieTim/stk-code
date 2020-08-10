@@ -1,0 +1,5 @@
+/**
+ * Imitate the curl interface
+ * 
+ * 
+ * */

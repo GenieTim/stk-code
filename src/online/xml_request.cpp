@@ -24,9 +24,13 @@
 #include "utils/translation.hpp"
 
 #ifdef WIN32
-#  include <winsock2.h>
+#include <winsock2.h>
 #endif
+#ifdef EMSCRIPTEN
+#include "emscripten_curl.h"
+#else
 #include <curl/curl.h>
+#endif
 
 #include <assert.h>
 

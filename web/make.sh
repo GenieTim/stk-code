@@ -13,6 +13,12 @@ emcmake cmake .. \
   -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON # \
   # || exit 4
 
+# remove some "unnecessary" libraries it tries to link
+sed -i 's/\ \-lnul//g' "CMakeFiles/supertuxkart.dir/linklibs.rsp" 
+sed -i 's/\ \-lNETTLE_LIBRARY\-NOTFOUND//g' "CMakeFiles/supertuxkart.dir/linklibs.rsp" 
+sed -i 's/\ \-lLIBRESOLV_LIBRARY\-NOTFOUND//g' "CMakeFiles/supertuxkart.dir/linklibs.rsp" 
+sed -i 's/\ \-lPTHREAD_LIBRARY\-NOTFOUND//g' "CMakeFiles/supertuxkart.dir/linklibs.rsp" 
+
 emmake cmake --build . # || exit 5
 
 emcc \

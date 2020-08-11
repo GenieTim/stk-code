@@ -203,6 +203,9 @@ namespace Online
      */
     void HTTPRequest::operation()
     {
+        #ifdef EMSCRIPTEN
+
+        #else
         if (!m_curl_session)
             return;
 
@@ -307,7 +310,9 @@ namespace Online
                 }
             }   // m_curl_code ==CURLE_OK
         }   // if fout
+        #endif
     }   // operation
+    
 
     // ------------------------------------------------------------------------
     /** Cleanup once the download is finished. The value of progress is

@@ -74,7 +74,10 @@ namespace Online
         m_menu_polling_interval = 60;  // Default polling: every 60 seconds.
         m_game_polling_interval = 60;  // same for game polling
         m_time_since_poll       = m_menu_polling_interval;
+        #ifdef EMSCRIPTEN
+        #else
         curl_global_init(CURL_GLOBAL_DEFAULT);
+        #endif
         m_abort.setAtomic(false);
     }   // RequestManager
 
@@ -82,7 +85,10 @@ namespace Online
     RequestManager::~RequestManager()
     {
         m_thread.join();
+        #ifdef EMSCRIPTEN
+        #else
         curl_global_cleanup();
+        #endif
     }   // ~RequestManager
 
     // ------------------------------------------------------------------------

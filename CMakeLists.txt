@@ -37,7 +37,7 @@ option(USE_CRYPTO_OPENSSL "Use OpenSSL instead of Nettle for cryptography in STK
 set(EMSCRIPTEN OFF CACHE BOOL "Build for the Web/use Emscripten's Libraries")
 if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     set(EMSCRIPTEN ON)
-    set(USE_FLAGS "-s USE_SDL=2 -s USE_FREETYPE=1 -s USE_HARFBUZZ=1 -s USE_LIBJPEG=1 -s USE_LIBPNG=1 -s USE_OGG=1 -s USE_VORBIS=1 -s FULL_ES2=1 -s FULL_ES3=1")
+    set(USE_FLAGS "-s USE_SDL=2 -s USE_FREETYPE=1 -s USE_HARFBUZZ=1 -s USE_LIBJPEG=1 -s USE_LIBPNG=1 -s USE_OGG=1 -s USE_VORBIS=1 -s USE_PTHREADS=1") #  -s FULL_ES2=1 -s FULL_ES3=1 -s LEGACY_GL_EMULATION=1
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${USE_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS}")
@@ -326,8 +326,24 @@ if (NOT SERVER_ONLY)
 endif()
 
 # Build the irrlicht library
-add_subdirectory("${PROJECT_SOURCE_DIR}/lib/irrlicht")
-include_directories("${PROJECT_SOURCE_DIR}/lib/irrlicht/include")
+if (EMSCRIPTEN)
+    # add_subdirectory("${PROJECT_SOURCE_DIR}/lib/irrlicht-emscripten/irrlicht-ogl-es/irrlicht")
+    include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
+    ExternalProject_Add(irrlicht_emscripten
+        GIT_REPOSITORY git@github.com:cjrgames/emscripten.git
+        PREFIX ${PROJECT_SOURCE_DIR}/lib/irrlicht-emscripten/
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND cd ../irrlicht_emscripten/irrlicht-ogl-es && make irrlicht
+        INSTALL_COMMAND ""
+        PREFIX=${CMAKE_CURRENT_BINARY_DIR}/irrlicht-emscripten
+    ) 
+    # TODO: assemble/copy resulting files as necessary
+    ExternalProject_Get_Property(irrlicht_emscripten install_dir)
+    include_directories(${install_dir}/irrlicht-ogl-es/irrlicht/include)
+else()
+    add_subdirectory("${PROJECT_SOURCE_DIR}/lib/irrlicht")
+    include_directories("${PROJECT_SOURCE_DIR}/lib/irrlicht/include")
+endif()
 
 # Build the Wiiuse library
 # Note: wiiuse MUST be declared after irrlicht, since otherwise
@@ -607,6 +623,14 @@ else()
     if (NOT WIN32)
         target_link_libraries(supertuxkart ${PTHREAD_LIBRARY})
     endif()
+endif()
+
+if(EMSCRIPTEN)
+    # add_library(irrlicht_emscripten STATIC IMPORTED)
+    # set_property(TARGET irrlicht_emscripten PROPERTY IMPORTED_LOCATION ${install_dir}/lib/libluajit-5.1.a)
+    add_dependencies(supertuxkart irrlicht_emscripten)
+    # target_link_libraries(SuperTuxKart irrlicht_emscripten)
+    #include_directories("${PROJECT_SOURCE_DIR}/lib/irrlicht-emscripten/irrlicht-ogl-es/irrlicht/include")
 endif()
 
 # check if linking against libatomic is required

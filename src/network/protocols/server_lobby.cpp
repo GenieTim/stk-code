@@ -186,6 +186,10 @@ ServerLobby::ServerLobby() : LobbyProtocol()
     for (int kart : all_k)
     {
         const KartProperties* kp = kart_properties_manager->getKartById(kart);
+        // Some distro put kart itself, ignore it online for the rest of stk
+        // user
+        if (kp->getIdent() == "geeko")
+            continue;
         if (!kp->isAddon())
             m_official_kts.first.insert(kp->getIdent());
     }
@@ -703,6 +707,7 @@ void ServerLobby::setup()
         m_available_kts.first = m_official_kts.first;
     else
         m_available_kts.first = { all_k.begin(), all_k.end() };
+    NetworkConfig::get()->setTuxHitboxAddon(ServerConfig::m_live_players);
     updateTracksForMode();
 
     m_server_has_loaded_world.store(false);
@@ -3437,7 +3442,7 @@ void ServerLobby::connectionRequested(Event* event)
         ServerConfig::m_validating_player) ||
         (ServerConfig::m_strict_players &&
         (player_count != 1 || online_id == 0 || duplicated_ranked_player)) ||
-        (peer->isAIPeer() && !peer->getAddress().isLAN()) ||
+        (peer->isAIPeer() && !peer->getAddress().isLAN() &&!ServerConfig::m_ai_anywhere) ||
         (peer->isAIPeer() &&
         ServerConfig::m_ai_handling && !m_ai_peer.expired()) ||
         (peer->isAIPeer() && m_game_setup->isGrandPrix()))
@@ -5114,9 +5119,16 @@ void ServerLobby::setPlayerKarts(const NetworkString& ns, STKPeer* peer) const
     {
         std::string kart;
         ns.decodeString(&kart);
-        if (m_available_kts.first.find(kart) == m_available_kts.first.end())
+        if (kart.find("randomkart") != std::string::npos ||
+            (kart.find("addon_") == std::string::npos &&
+            m_available_kts.first.find(kart) == m_available_kts.first.end()))
         {
-            continue;
+            RandomGenerator rg;
+            std::set<std::string>::iterator it =
+                m_available_kts.first.begin();
+            std::advance(it,
+                rg.get((int)m_available_kts.first.size()));
+            peer->getPlayerProfiles()[i]->setKartName(*it);
         }
         else
         {

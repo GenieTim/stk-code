@@ -563,10 +563,9 @@ namespace UserConfigParams
             "multitouch interface."));
 
     PARAM_PREFIX IntUserConfigParam         m_screen_keyboard
-            PARAM_DEFAULT( IntUserConfigParam(1, "screen_keyboard_mode",
+            PARAM_DEFAULT( IntUserConfigParam(0, "screen_keyboard_status",
             &m_multitouch_group,
-            "Screen keyboard mode: 0 = disabled, 1 = enabled if no hardware "
-            "keyboard, 2 = always enabled") );
+            "STK screen keyboard status: 0 = disabled, 1 = enabled") );
 
     // ---- GP start order
     PARAM_PREFIX GroupUserConfigParam        m_gp_start_order
@@ -902,7 +901,7 @@ namespace UserConfigParams
     PARAM_PREFIX IntUserConfigParam         m_swap_interval
             PARAM_DEFAULT( IntUserConfigParam(0, "swap_interval",
                            &m_graphics_quality,
-                           "Swap interval for vsync: 0 = disabled, 1 = full, 2 = half") );
+                           "Swap interval for vsync: 0 = disabled, 1 = full") );
     PARAM_PREFIX BoolUserConfigParam         m_motionblur
             PARAM_DEFAULT( BoolUserConfigParam(false,
                            "motionblur_enabled", &m_graphics_quality,
@@ -937,6 +936,38 @@ namespace UserConfigParams
             PARAM_DEFAULT(  BoolUserConfigParam(false, "crashed") );
 
     // ---- Camera
+    PARAM_PREFIX GroupUserConfigParam        m_camera_normal
+            PARAM_DEFAULT( GroupUserConfigParam(
+                        "camera-normal",
+                        "Camera settings for player.") );
+
+    PARAM_PREFIX FloatUserConfigParam         m_camera_distance
+            PARAM_DEFAULT(  FloatUserConfigParam(1.0, "distance",
+            &m_camera_normal,
+            "Distance between kart and camera"));
+
+    PARAM_PREFIX FloatUserConfigParam         m_camera_forward_up_angle
+            PARAM_DEFAULT(  FloatUserConfigParam(0, "forward-up-angle",
+            &m_camera_normal,
+            "Angle between camera and plane of kart (pitch) when the camera is pointing forward"));
+
+    PARAM_PREFIX BoolUserConfigParam         m_camera_forward_smoothing
+            PARAM_DEFAULT(  BoolUserConfigParam(true, "forward-smoothing",
+            &m_camera_normal,
+            "if true, use smoothing (forward-up-angle become relative to speed) when pointing forward"));
+
+    PARAM_PREFIX FloatUserConfigParam         m_camera_backward_up_angle
+            PARAM_DEFAULT(  FloatUserConfigParam(5, "backward-up-angle",
+            &m_camera_normal,
+            "Angle between camera and plane of kart (pitch) when the camera is pointing backwards. This is usually larger than the forward-up-angle, since the kart itself otherwise obstricts too much of the view"));
+
+    PARAM_PREFIX IntUserConfigParam         m_camera_fov
+            PARAM_DEFAULT(  IntUserConfigParam(80, "fov",
+            &m_camera_normal,
+            "Focal distance (single player)"));
+
+
+    // camera in artist mode
     PARAM_PREFIX GroupUserConfigParam        m_camera
             PARAM_DEFAULT( GroupUserConfigParam("camera",
                                                 "(Debug) camera settings.") );

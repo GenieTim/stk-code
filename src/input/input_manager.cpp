@@ -21,6 +21,8 @@
 #include "config/user_config.hpp"
 #include "graphics/camera_fps.hpp"
 #include "graphics/irr_driver.hpp"
+#include "graphics/shader_based_renderer.hpp"
+#include "graphics/sp/sp_base.hpp"
 #include "guiengine/engine.hpp"
 #include "guiengine/event_handler.hpp"
 #include "guiengine/modaldialog.hpp"
@@ -87,14 +89,40 @@ InputManager::InputManager() : m_mode(BOOTSTRAP),
     m_timer_in_use = false;
     m_master_player_only = false;
     m_timer = 0;
-#if !defined(SERVER_ONLY) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
-    SDL_SetMainReady();
-    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
-    SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
-    if (SDL_Init(SDL_INIT_GAMECONTROLLER) != 0)
+#ifndef SERVER_ONLY
+    if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) != 0)
     {
-        Log::error("InputManager", "Unable to initialize SDL: %s",
+        Log::error("InputManager", "Failed to init SDL game controller: %s",
             SDL_GetError());
+    }
+#endif
+}
+
+// -----------------------------------------------------------------------------
+void InputManager::addJoystick()
+{
+#ifndef SERVER_ONLY
+    // When irrlicht device is reinitialized the joystick added event may be
+    // lost, we look for them and add it back
+    for (int i = 0; i < SDL_NumJoysticks(); i++)
+    {
+        try
+        {
+            SDL_Joystick* joystick = SDL_JoystickOpen(i);
+            if (!joystick)
+                continue;
+            SDL_JoystickID id = SDL_JoystickInstanceID(joystick);
+            if (m_sdl_controller.find(id) != m_sdl_controller.end())
+                continue;
+            std::unique_ptr<SDLController> c(
+                new SDLController(i));
+            id = c->getInstanceID();
+            m_sdl_controller[id] = std::move(c);
+        }
+        catch (std::exception& e)
+        {
+            Log::error("SDLController", "%s", e.what());
+        }
     }
 #endif
 }
@@ -115,13 +143,6 @@ void InputManager::handleJoystick(SDL_Event& event)
     {
         switch (event.type)
         {
-#if !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
-        case SDL_QUIT:
-        {
-            exit(-1);
-            break;
-        }
-#endif
         case SDL_JOYDEVICEADDED:
         {
             std::unique_ptr<SDLController> c(
@@ -181,12 +202,6 @@ void InputManager::update(float dt)
         wiimote_manager->update();
 #endif
 
-#if !defined(SERVER_ONLY) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
-        handleJoystick(event);
-#endif
-
     if(m_timer_in_use)
     {
         m_timer -= dt;
@@ -212,9 +227,6 @@ InputManager::~InputManager()
     m_sdl_controller.clear();
 #endif
     delete m_device_manager;
-#if !defined(SERVER_ONLY) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
-    SDL_Quit();
-#endif
 }   // ~InputManager
 
 //-----------------------------------------------------------------------------
@@ -407,16 +419,13 @@ void InputManager::handleStaticAction(int key, int value)
             }
             break;
         case IRR_KEY_F11:
-            if(value && shift_is_pressed && world && RewindManager::isEnabled())
+            if(value && shift_is_pressed)
             {
-                printf("Enter rewind to time in ticks:");
-                char s[256];
-                fgets(s, 256, stdin);
-                int t;
-                StringUtils::fromString(s,t);
-                RewindManager::get()->rewindTo(t, world->getTicksSinceStart(), false);
-                Log::info("Rewind", "Rewinding from %d to %d",
-                          world->getTicksSinceStart(), t);
+#ifndef SERVER_ONLY
+                ShaderBasedRenderer* sbr = SP::getRenderer();
+                if (sbr)
+                    sbr->dumpRTT();
+#endif
             }
             break;
 

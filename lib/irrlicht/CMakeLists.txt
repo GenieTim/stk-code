@@ -1,10 +1,11 @@
 # CMakeLists.txt for Irrlicht in STK
 if(NOT SERVER_ONLY)
-
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/"
                         "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
                         
     if (EMSCRIPTEN)
+        # add_link_options("LINKER:-s USE_ZLIB=1")
+        set(USE_FLAGS "-s USE_ZLIB=1 -s USE_LIBJPEG=1 -s USE_LIBPNG=1")
     else()
         find_package(PNG REQUIRED)
         find_package(JPEG REQUIRED)
@@ -21,7 +22,7 @@ if(NOT SERVER_ONLY)
 else()
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/"
                         "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
-    if (NOT EMSCRIPEN)
+    if (NOT EMSCRIPTEN)
         find_package(ZLIB REQUIRED)
         include_directories("${ZLIB_INCLUDE_DIR}")
     endif()
@@ -64,6 +65,12 @@ if(USE_GLES2)
         add_definitions(-D_IRR_COMPILE_WITH_OGLES2_)
     endif()
     add_definitions(-DNO_IRR_COMPILE_WITH_OPENGL_)
+endif()
+
+if(EMSCRIPTEN)
+    # use opengl
+    set(USE_FLAGS "-s FULL_ES2=1 -s FULL_ES3=1") # -s LEGACY_GL_EMULATION=1
+    # add_definitions() # TODO: any NO_ ... needed?
 endif()
 
 if(CYGWIN)
@@ -539,14 +546,14 @@ endif()
 
 add_library(stkirrlicht STATIC ${IRRLICHT_SOURCES})
 
-if (EMSCRIPEN)
-    # add_link_options("LINKER:-s USE_ZLIB=1")
+if (EMSCRIPTEN)
+    set(USE_FLAGS "-s USE_ZLIB=1") 
 else()
     target_link_libraries(stkirrlicht ${ZLIB_LIBRARY})
 endif()
 
 if(NOT SERVER_ONLY)
-    if (EMSCRIPEN)
+    if (EMSCRIPTEN)
         # add_link_options("LINKER:-s USE_LIBJPEG=1")
         # add_link_options("LINKER:-s USE_LIBPNG=1")
     else()

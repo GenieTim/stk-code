@@ -27,25 +27,27 @@ extern "C" {
 #    define GL_SILENCE_DEPRECATION
 #    define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
 #endif
-#if !defined(USE_GLES2)
+// #if !defined(USE_GLES2)
 #    include <GL/glew.h>
 // This is a workaround for mesa drivers that now use __gl_glext_h_ instead of
 // __glext_h_ in header file which is not defined in current glew version
 #    define __gl_glext_h_
-#endif
+// #endif
 }
 #include <cinttypes>
 
 #if defined(USE_GLES2)
-#    define __gl2_h_
-#if defined(__APPLE__)
-#    include <OpenGLES/ES3/gl.h>
-#    include <OpenGLES/ES3/glext.h>
-#    include <OpenGLES/ES2/glext.h>
-#else
-#    include <GLES3/gl3.h>
-#    include <GLES3/gl3ext.h>
-#    include <GLES2/gl2ext.h>
+  #define __gl2_h_
+  #ifndef EMSCRIPTEN
+    #if defined(__APPLE__)
+      #include <OpenGLES/ES3/gl.h>
+    #    include <OpenGLES/ES3/glext.h>
+    #    include <OpenGLES/ES2/glext.h>
+    #else 
+      #include <GLES3/gl3.h>
+      #include <GLES3/gl3ext.h>
+      #include <GLES2/gl2ext.h>
+  #endif
 #endif
 #    define glVertexAttribDivisorARB glVertexAttribDivisor
 #elif defined(__APPLE__)

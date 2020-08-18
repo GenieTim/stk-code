@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# additionally, one time, you have to run:
+# git submodule update --init --recursive
+# cd ./lib/nettle/nettle && autoconfig && autoheader && emconfigure ./configure
+
 cd "${0%/*}/.." || exit 2
 
 mkdir cmake_build

@@ -706,6 +706,7 @@ endif()
 
 if(NOT SERVER_ONLY)
     if(EMSCRIPTEN)
+        target_link_libraries(supertuxkart ${GLEW_LIBRARIES})
     elseif(NOT USE_GLES2)
         target_link_libraries(supertuxkart ${OPENGL_gl_LIBRARY} ${GLEW_LIBRARIES})
     elseif (IOS)

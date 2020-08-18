@@ -2,7 +2,7 @@
 
 # additionally, one time, you have to run:
 # git submodule update --init --recursive
-# cd ./lib/nettle/nettle && autoconfig && autoheader && emconfigure ./configure
+# cd ./lib/nettle/nettle && autoconf && autoheader && emconfigure ./configure
 
 cd "${0%/*}/.." || exit 2
 

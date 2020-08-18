@@ -84,3 +84,8 @@ lib/harfbuzz
 lib/sdl2
 
 .DS_Store
+
+Brewfile.lock.json
+lib/irrlicht-emscripten
+android/.settings
+android/.project

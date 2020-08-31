@@ -55,7 +55,7 @@ CMAKE_DEPENDENT_OPTION(USE_SYSTEM_SQUISH "Use system Squish library instead of t
 CMAKE_DEPENDENT_OPTION(USE_WIIUSE "Support for wiimote input devices" ON
     "NOT SERVER_ONLY;NOT CYGWIN" OFF)
 
-if(APPLE AND NOT IOS)
+if(APPLE AND NOT IOS AND NOT EMSCRIPTEN)
     list(APPEND CMAKE_PREFIX_PATH /usr/local/opt)
     include_directories(/usr/local/opt/fribidi/include/)
     include_directories(/usr/local/opt/openssl@1.1/include/)
